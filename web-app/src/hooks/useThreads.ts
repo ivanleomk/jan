@@ -2,10 +2,12 @@ import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import { localStoregeKey } from '@/constants/localStorage'
 import { mockTheads } from '@/mock/data'
+import Fuse from 'fuse.js'
 
 type ThreadState = {
   threads: Thread[]
   deletedThreadIds: string[]
+  searchIndex: Fuse<Thread> | null
   setThreads: (threads: Thread[]) => void
   fetchThreads: () => Promise<void>
   getFavoriteThreads: () => Thread[]
@@ -14,6 +16,32 @@ type ThreadState = {
   deleteThread: (threadId: string) => void
   deleteAllThreads: () => void
   unstarAllThreads: () => void
+  filteredThreads: (searchTerm: string) => Thread[]
+}
+
+const fuseOptions = {
+  keys: [
+    ['title'],
+    {
+      name: 'content',
+      getFn: (thread: Thread) => {
+        // Extract all text values from the thread content
+        return thread.content
+          .filter((item) => item.text?.value)
+          .map((item) => item.text!.value)
+          .join('\n') // Join all text values into a single searchable string
+      },
+    },
+  ],
+  threshold: 0.2,
+  shouldSort: true,
+  includeMatches: true,
+  ignoreLocation: true, // Ignore the location of the match in the string
+  useExtendedSearch: true, // Enable extended search
+  distance: 20, // Maximum edit distance for fuzzy matching
+  tokenize: true, // Tokenize the search pattern and text
+  matchAllTokens: true, // Only require some tokens to match, not all
+  findAllMatches: true, // Find all matches, not just the first one,
 }
 
 export const useThreads = create<ThreadState>()(
@@ -21,7 +49,11 @@ export const useThreads = create<ThreadState>()(
     (set, get) => ({
       threads: [],
       deletedThreadIds: [],
-      setThreads: (threads) => set({ threads }),
+      searchIndex: null,
+      setThreads: (threads) => {
+        const newIndex = new Fuse(threads, fuseOptions)
+        set({ threads, searchIndex: newIndex })
+      },
       toggleFavorite: (threadId) => {
         set((state) => ({
           threads: state.threads.map((thread) =>
@@ -32,10 +64,21 @@ export const useThreads = create<ThreadState>()(
         }))
       },
       deleteThread: (threadId) => {
-        set((state) => ({
-          threads: state.threads.filter((thread) => thread.id !== threadId),
-          deletedThreadIds: [...state.deletedThreadIds, threadId],
-        }))
+        set((state) => {
+          // Filter out the thread to be deleted
+          const updatedThreads = state.threads.filter(
+            (thread) => thread.id !== threadId
+          )
+
+          // Create a new search index with the updated threads
+          const newIndex = new Fuse(updatedThreads, fuseOptions)
+
+          return {
+            threads: updatedThreads,
+            deletedThreadIds: [...state.deletedThreadIds, threadId],
+            searchIndex: newIndex,
+          }
+        })
       },
       deleteAllThreads: () => {
         set((state) => {
@@ -43,6 +86,7 @@ export const useThreads = create<ThreadState>()(
           return {
             threads: [],
             deletedThreadIds: [...state.deletedThreadIds, ...allThreadIds],
+            searchIndex: null,
           }
         })
       },
@@ -53,6 +97,28 @@ export const useThreads = create<ThreadState>()(
             isFavorite: false,
           })),
         }))
+      },
+      filteredThreads: (searchTerm: string) => {
+        const { threads, searchIndex } = get()
+
+        // If no search term, return all threads
+        if (!searchTerm) {
+          return threads
+        }
+
+        // Get current search index or create a new one if it doesn't exist
+        const currentIndex =
+          searchIndex ||
+          (() => {
+            const newIndex = new Fuse(threads, fuseOptions)
+            // Update the store with the new index
+            set({ searchIndex: newIndex })
+            return newIndex
+          })()
+
+        // Use the index to search and return matching threads
+        const searchResults = currentIndex.search(searchTerm)
+        return searchResults.map((result) => result.item)
       },
       getFavoriteThreads: () => {
         return get().threads.filter((thread) => thread.isFavorite)
@@ -79,16 +145,18 @@ export const useThreads = create<ThreadState>()(
             localIds.every((id) => responseIds.includes(id))
 
           if (isSame) {
-            return {}
+            return { threads: state.threads, searchIndex: state.searchIndex }
           }
 
           const existingIds = new Set(localIds)
           const newThreads = filteredResponse.filter(
             (t) => !existingIds.has(t.id)
           )
-
+          const updatedThreads = [...state.threads, ...newThreads]
+          const newIndex = new Fuse(updatedThreads, fuseOptions)
           return {
-            threads: [...newThreads, ...state.threads],
+            threads: updatedThreads,
+            searchIndex: newIndex,
           }
         })
       },
@@ -96,6 +164,10 @@ export const useThreads = create<ThreadState>()(
     {
       name: localStoregeKey.threads,
       storage: createJSONStorage(() => localStorage),
+      partialize: (state: ThreadState) => ({
+        threads: state.threads,
+        deletedThreadIds: state.deletedThreadIds,
+      }),
     }
   )
 )
