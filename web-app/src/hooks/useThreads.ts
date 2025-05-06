@@ -34,7 +34,6 @@ const fuseOptions = {
     },
   ],
   threshold: 0.2,
-  shouldSort: true,
   includeMatches: true,
   ignoreLocation: true, // Ignore the location of the match in the string
   useExtendedSearch: true, // Enable extended search
@@ -118,7 +117,8 @@ export const useThreads = create<ThreadState>()(
 
         // Use the index to search and return matching threads
         const searchResults = currentIndex.search(searchTerm)
-        return searchResults.map((result) => result.item)
+        const validIds = searchResults.map((result) => result.item.id)
+        return get().threads.filter((thread) => validIds.includes(thread.id))
       },
       getFavoriteThreads: () => {
         return get().threads.filter((thread) => thread.isFavorite)
