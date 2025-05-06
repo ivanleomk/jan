@@ -106,11 +106,12 @@ const LeftPanel = () => {
               <label htmlFor="search" className="sr-only">
                 Search Conversations
               </label>
+
               <Input
                 type="text"
                 id="search"
                 placeholder="Search Conversations"
-                className="w-full px-2 py-1.5 text-sm bg-transparent border border-left-panel-fg/20 focus:outline-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-left-panel-fg/20 my-4"
+                className="px-2 py-1.5 mt-4 mb-2 focus:outline-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 placeholder-gray-400 placeholder-opacity-50"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
