@@ -23,6 +23,8 @@ import {
 import { useThreads } from '@/hooks/useThreads'
 
 import { useTranslation } from 'react-i18next'
+import { Input } from '@/components/ui/input'
+import { useState } from 'react'
 
 const mainMenus = [
   {
@@ -53,12 +55,16 @@ const secondaryMenus = [
 const LeftPanel = () => {
   const { open, setLeftPanel } = useLeftPanel()
   const { t } = useTranslation()
+  const [searchTerm, setSearchTerm] = useState('')
 
   const currentPath = useRouterState({
     select: (state) => state.location.pathname,
   })
 
-  const { threads, deleteAllThreads, unstarAllThreads } = useThreads()
+  const { getFilteredThreads, deleteAllThreads, unstarAllThreads } =
+    useThreads()
+
+  const threads = getFilteredThreads(searchTerm)
 
   return (
     <aside
@@ -97,6 +103,20 @@ const LeftPanel = () => {
             })}
           </div>
           <div className="flex flex-col w-full h-full overflow-hidden">
+            <div className="relative">
+              <label htmlFor="search" className="sr-only">
+                Search Conversations
+              </label>
+
+              <Input
+                type="text"
+                id="search"
+                placeholder="Search Conversations"
+                className="px-2 py-1.5 mt-4 mb-2 focus:outline-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 placeholder-gray-400 placeholder-opacity-50"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
             <div className="h-full overflow-y-auto overflow-x-hidden">
               {threads.filter((t) => t.isFavorite === true).length > 0 && (
                 <>

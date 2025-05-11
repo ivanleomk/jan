@@ -784,7 +784,7 @@ export const mockTheads = [
         role: 'user',
         type: ContentType.Text,
         text: {
-          value: 'Dow u know Ultimate Markdown Demonstration',
+          value: 'Do you know Ultimate Markdown Demonstration?',
           annotations: [],
         },
       },
@@ -805,7 +805,7 @@ export const mockTheads = [
   },
   {
     id: '2',
-    title: 'Modern JavaScript: A Comprehensive Guide',
+    title: 'Learn Javascript',
     isFavorite: false,
     content: [
       {
@@ -833,7 +833,7 @@ export const mockTheads = [
   },
   {
     id: '3',
-    title: 'Modern JavaScript: A Comprehensive Guide',
+    title: 'A user conversation with an AI assistant',
     isFavorite: false,
     content: [
       {
@@ -841,7 +841,7 @@ export const mockTheads = [
         role: 'user',
         text: {
           annotations: [],
-          value: 'Ask question from user',
+          value: 'What is the weather in Tokyo?',
         },
         type: 'text',
         created_at: 1746419535.019,
