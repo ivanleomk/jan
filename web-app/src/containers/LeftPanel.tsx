@@ -61,9 +61,10 @@ const LeftPanel = () => {
     select: (state) => state.location.pathname,
   })
 
-  const { filteredThreads, deleteAllThreads, unstarAllThreads } = useThreads()
+  const { getFilteredThreads, deleteAllThreads, unstarAllThreads } =
+    useThreads()
 
-  const threads = filteredThreads(searchTerm)
+  const threads = getFilteredThreads(searchTerm)
 
   return (
     <aside

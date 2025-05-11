@@ -16,7 +16,7 @@ type ThreadState = {
   deleteThread: (threadId: string) => void
   deleteAllThreads: () => void
   unstarAllThreads: () => void
-  filteredThreads: (searchTerm: string) => Thread[]
+  getFilteredThreads: (searchTerm: string) => Thread[]
 }
 
 const fuseOptions = {
@@ -97,7 +97,7 @@ export const useThreads = create<ThreadState>()(
           })),
         }))
       },
-      filteredThreads: (searchTerm: string) => {
+      getFilteredThreads: (searchTerm: string) => {
         const { threads, searchIndex } = get()
 
         // If no search term, return all threads
